@@ -13,3 +13,14 @@ General form
 ```
 aws s3 /path/to/file s3://{bucketName}/file/path 
 ```
+
+
+Hmm...
+
+
+```
+Properties:
+    Attribute: !Sub
+        - ${VariableName}
+        - Variable: Value || !Ref ParameterName
+``` 

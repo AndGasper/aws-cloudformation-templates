@@ -1,4 +1,10 @@
-AWSTemplateFormationVersion: "2010-09-09"
+AWSTemplateFormatVersion: "2010-09-09"
+Description:
+  Creates s3 bucket. Probably has to share same name as dns record
+Parameters:
+  RootDomainName:
+    Description: Domain name for the website
+    Type: String
 Mappings:
   RegionMap:
     us-east-1:
@@ -26,11 +32,45 @@ Mappings:
       S3hostedzoneID: Z31GFT0UA1I2HV
       websiteendpoint: s3-website-sa-east-1.amazonaws.com
 Resources:
-  Fn::Transform:
-    Name: AWS::Include
-    Parameters:
-      Location: s3://cloudformation-templates-modular/s3/static-website.yaml
-  siteDNS:
+  SiteS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub
+        - ${Domain}
+        - Domain: !Ref RootDomainName
+      AccessControl: PublicRead
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: error.html
+    DeletionPolicy: Retain
+  BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref SiteS3Bucket
+      PolicyDocument:
+        Id: S3PolicyForWebsite
+        Version: 2012-10-17
+        Statement:
+          - Sid: PublicReadForGetBucketObjects
+            Effect: Allow
+            Principal: '*'
+            Action: 's3:GetObject'
+            Resource: !Join
+              - ''
+              - - 'arn:aws:s3:::'
+                - !Ref SiteS3Bucket
+                - /*
+  WWWSiteS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub
+        - www.${Domain}
+        - Domain: !Ref RootDomainName
+      AccessControl: BucketOwnerFullControl
+      WebsiteConfiguration: 
+        RedirectAllRequestsTo:
+          HostName: !Ref SiteS3Bucket
+  SiteDNS:
     Type: AWS::Route53::RecordSetGroup
     Properties:
         HostedZoneName: !Sub
@@ -54,5 +94,15 @@ Resources:
           - !GetAtt WWWSiteS3Bucket.DomainName
 Outputs:
   WebsiteURL:
-    Value: !GetAtt SiteS3Bucket.WebsiteURL
+    Value: !GetAtt 
+      - SiteS3Bucket
+      - WebsiteURL
     Description: URL for website hosted on S3
+  S3BucketSecureURL:
+    Value: !Join 
+      - ''
+      - - 'https://'
+        - !GetAtt 
+          - SiteS3Bucket
+          - DomainName
+    Description: Name of S3 bucket to hold website content

@@ -1,5 +1,5 @@
 ---
-  AWSTemplateFormationVersion: "2010-09-09"
+  AWSTemplateFormatVersion: "2010-09-09"
   
   Description:
     Creates 2 s3 buckets, 1 for the site and 1 for the www version
@@ -7,55 +7,39 @@
     RootDomainName:
       Description: Domain name for the website (example.com)
       Type: String
-  Resources:
-    SiteS3Bucket:
-      Type: AWS::S3::Bucket
-      Properties:
-        AccessControl: PublicRead
-        WebsiteConfiguration:
-          IndexDocument: index.html
-          ErrorDocument: error.html
-      DeletionPolicy: Retain
-    BucketPolicy:
-      Type: AWS::S3::BucketPolicy
-      Properties:
-        PolicyDocument:
-          Id: S3PolicyForWebsite
-          Version: 2012-10-17
-          Statement:
-            - Sid: PublicReadForGetBucketObjects
-              Effect: Allow
-              Principal: '*'
-              Action: 's3:GetObject'
-              Resource: !Join
-                - ''
-                - - 'arn:aws:s3:::'
-                  - !Ref SiteS3Bucket
-                  - /*
-      Bucket: !Ref SiteS3Bucket
-    WWWSiteS3Bucket:
-      Type: AWS::S3::Bucket
-      Properties:
-        BucketName: !Sub
-          - www.${Domain}
-          - Domain: !Ref RootDomainName
-          AccessControl: BucketOwnerFullControl
-          WebsiteConfiguration: 
-            RedirectAllRequestsTo:
-              HostName: !Ref SiteS3Bucket
-  Outputs:
-      WebsiteURL:
-          Value: !GetAtt
-            - SiteS3Bucket
-            - WebsiteURL
-          Description: URL for website hosted on S3
-      S3BucketSecureURL:
-        Value: !Join
-          - ''
-          - - 'https://'
-            - !GetAtt
-              - SiteS3Bucket
-              - DomainName
-        Description: Name of S3 bucket to hold website content
-
-
+Resources:
+  SiteS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      AccessControl: PublicRead
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: error.html
+    DeletionPolicy: Retain
+  BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      PolicyDocument:
+        Id: S3PolicyForWebsite
+        Version: 2012-10-17
+        Statement:
+          - Sid: PublicReadForGetBucketObjects
+            Effect: Allow
+            Principal: '*'
+            Action: 's3:GetObject'
+            Resource: !Join
+              - ''
+              - - 'arn:aws:s3:::'
+                - !Ref SiteS3Bucket
+                - /*
+    Bucket: !Ref SiteS3Bucket
+  WWWSiteS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub
+        - www.${Domain}
+        - Domain: !Ref RootDomainName
+        AccessControl: BucketOwnerFullControl
+        WebsiteConfiguration: 
+          RedirectAllRequestsTo:
+            HostName: !Ref SiteS3Bucket
