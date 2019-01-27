@@ -22,5 +22,18 @@ Hmm...
 Properties:
     Attribute: !Sub
         - ${VariableName}
-        - Variable: Value || !Ref ParameterName
+        - VariableName: Value || !Ref ParameterName
 ``` 
+
+Save yourself some heartache and make sure the bucket created is actually associated with something you can read. 
+
+The first go around, I forgot the:
+```
+Properties
+    BucketName: !Sub
+        - ${Domain}
+        - Domain: !Ref RootDomainName
+```
+and I didn't want to deal with copying everything over, but I'm getting an unintended detour through the Route53 record set stuff. 
+
+:triumph: 
